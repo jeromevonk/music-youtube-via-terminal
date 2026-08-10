@@ -1,0 +1,16 @@
+```gitignore
+# Personal music library
+music.txt
+
+# Local configuration
+.config/
+
+# Editor files
+*~
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+```

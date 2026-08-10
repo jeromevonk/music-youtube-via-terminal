@@ -1,0 +1,15 @@
+# YouTube Music Player
+#
+# Add one YouTube video or playlist URL per line.
+# Lines starting with "#" are ignored.
+# Empty lines are ignored.
+
+# Example video
+https://www.youtube.com/watch?v=dQw4w9WgXcQ
+
+# Example playlist
+https://www.youtube.com/playlist?list=PLxxxxxxxxxxxxxxxx
+
+# You can mix videos and playlists
+# https://www.youtube.com/watch?v=xxxxxxxxxxx
+# https://www.youtube.com/playlist?list=xxxxxxxxxxx
