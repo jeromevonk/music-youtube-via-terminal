@@ -6,8 +6,10 @@ The goal is simple: play music from YouTube without keeping a full browser windo
 
 ## Features
 
-* Play a random YouTube video or playlist
+* Continuously play random YouTube videos or playlists
 * Play a specific URL
+* Toggle play/pause for the active player
+* Control playback with KDE media keys through MPRIS
 * Save YouTube videos and playlists to a local library
 * Add and remove URLs from the command line
 * List saved URLs
@@ -22,13 +24,15 @@ The goal is simple: play music from YouTube without keeping a full browser windo
 * Bash
 * [mpv](https://mpv.io/)
 * [yt-dlp](https://github.com/yt-dlp/yt-dlp)
+* [socat](http://www.dest-unreach.org/socat/) for `music --pause`
+* `mpv-mpris` for KDE media-key integration (optional)
 
 ### Ubuntu / Debian
 
 Install the dependencies:
 
 ```bash
-sudo apt install mpv yt-dlp
+sudo apt install mpv yt-dlp socat mpv-mpris
 ```
 
 For the latest version of `yt-dlp`, see the [official releases](https://github.com/yt-dlp/yt-dlp/releases).
@@ -95,7 +99,9 @@ Run:
 music
 ```
 
-The player randomly selects one URL from the music library and starts playback.
+The player randomly selects a URL from the music library. When playback ends, it
+selects another URL and continues playing. With more than one saved URL, it
+will not select the same URL twice in a row.
 
 ### Play a specific URL
 
@@ -103,7 +109,8 @@ The player randomly selects one URL from the music library and starts playback.
 music "https://www.youtube.com/watch?v=XXXXXXXX"
 ```
 
-Playlists are supported:
+Playlists are supported. Once the supplied URL or playlist finishes, playback
+continues with a random URL from the music library:
 
 ```bash
 music "https://www.youtube.com/playlist?list=XXXXXXXX"
@@ -122,6 +129,30 @@ music -a "https://www.youtube.com/watch?v=XXXXXXXX"
 ```
 
 Duplicate URLs are automatically ignored.
+
+### Toggle play/pause
+
+With music already playing, toggle pause or resume from any terminal:
+
+```bash
+music --pause
+```
+
+Short form:
+
+```bash
+music -p
+```
+
+### Stop playback
+
+Press `Ctrl+C` once in the terminal running `music` to stop playback completely.
+
+### KDE media keys
+
+Install `mpv-mpris` to make `music` appear in KDE's standard media controller.
+After starting `music`, the keyboard Play/Pause button controls it globally, just
+like a browser media session. Restart `music` after installing the package.
 
 ### List saved URLs
 
@@ -222,8 +253,9 @@ $XDG_CONFIG_HOME/music/music.txt
 
 | Command              | Description            |
 | -------------------- | ---------------------- |
-| `music`              | Play a random URL      |
-| `music URL`          | Play a specific URL    |
+| `music`              | Play random URLs continuously |
+| `music URL`          | Play a URL, then continue randomly |
+| `music --pause`      | Toggle play/pause in the active player |
 | `music --list`       | List saved URLs        |
 | `music --add URL`    | Add a URL              |
 | `music --remove URL` | Remove a URL           |
@@ -234,6 +266,7 @@ $XDG_CONFIG_HOME/music/music.txt
 
 | Short | Long       |
 | ----- | ---------- |
+| `-p`  | `--pause`  |
 | `-l`  | `--list`   |
 | `-a`  | `--add`    |
 | `-r`  | `--remove` |

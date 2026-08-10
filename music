@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 set -u
+trap 'exit 0' INT TERM
 
 MUSIC_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/music"
 MUSIC_FILE="$MUSIC_DIR/music.txt"
@@ -14,8 +15,9 @@ show_help() {
 YouTube Music Player
 
 Usage:
-  music                         Play a random URL
-  music URL                     Play a specific URL
+  music                         Play random URLs continuously
+  music URL                     Play this URL, then continue randomly
+  music --pause                 Toggle play/pause in the active player
   music --list                  List saved URLs
   music --add URL               Add a URL
   music --remove URL            Remove a URL
@@ -102,11 +104,39 @@ remove_url() {
     echo "$url"
 }
 
+toggle_pause() {
+    if [ ! -S /tmp/music-mpv.sock ]; then
+        echo "No active music player found."
+        exit 1
+    fi
+
+    printf '%s\n' '{ "command": ["cycle", "pause"] }' \
+        | socat - UNIX-CONNECT:/tmp/music-mpv.sock > /dev/null
+}
+
+random_url() {
+    local previous_url="${1:-}"
+    local -a urls=()
+
+    mapfile -t urls < <(get_urls)
+
+    if [ "${#urls[@]}" -eq 0 ]; then
+        return 1
+    fi
+
+    # Avoid playing the same library entry twice in a row when possible.
+    if [ "${#urls[@]}" -gt 1 ] && [ -n "$previous_url" ]; then
+        printf '%s\n' "${urls[@]}" | grep -Fxv "$previous_url" | shuf -n 1
+    else
+        printf '%s\n' "${urls[@]}" | shuf -n 1
+    fi
+}
+
 play_url() {
     local url="${1:-}"
 
     if [ -z "$url" ]; then
-        url=$(get_urls | shuf -n 1)
+        url=$(random_url)
     fi
 
     if [ -z "$url" ]; then
@@ -123,13 +153,34 @@ play_url() {
     echo "$url"
     echo
 
-    mpv --no-video "$url"
+    mpv --no-video \
+        --input-ipc-server=/tmp/music-mpv.sock \
+        "$url"
+}
+
+play_continuously() {
+    local url="${1:-}"
+
+    while true; do
+        if [ -z "$url" ]; then
+            url=$(random_url)
+        fi
+
+        if ! play_url "$url"; then
+            return
+        fi
+        url=$(random_url "$url")
+    done
 }
 
 case "${1:-}" in
 
     "")
-        play_url
+        play_continuously
+        ;;
+
+    --pause|-p)
+        toggle_pause
         ;;
 
     --list|-l)
@@ -153,7 +204,7 @@ case "${1:-}" in
         ;;
 
     http://*|https://*)
-        play_url "$1"
+        play_continuously "$1"
         ;;
 
     *)
